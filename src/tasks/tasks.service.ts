@@ -6,6 +6,7 @@ import { Task } from './entities/task.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { TaskProcessor } from './queues/task.processor';
 import { SendEmailProcessor } from 'src/jobs/send-email.processor';
+import { QueueEvents } from 'bullmq';
 
 @Injectable()
 export class TasksService {
@@ -19,8 +20,19 @@ export class TasksService {
   async create(createTaskDto: CreateTaskDto) {
     const task = this.taskRepository.create(createTaskDto);
 
-     await this.taskProcessor.addTask(createTaskDto);
-     await this.taskRepository.save(task);
+    const job = await this.taskProcessor.addTask(createTaskDto);
+    await this.taskRepository.save(task);
+
+    const queueEvent = new QueueEvents(job.queueName);
+
+    await job.waitUntilFinished(queueEvent);
+
+    await this.sendEmailProcessor.sendEmail(
+      'email@email.com',
+      'Teste de envio de email',
+      'Esse é um teste de envio de email',
+    );
+
     return task;
   }
 

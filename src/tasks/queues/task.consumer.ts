@@ -20,11 +20,5 @@ export class TaskConsumer extends WorkerHost {
   @OnWorkerEvent('completed')
   onCompleted(job: Job): void {
     console.log('Job saiu da fila', job.id);
-
-    this.sendEmailProcessor.sendEmail(
-      'email@email.com',
-      'Teste de envio de email',
-      'Esse é um teste de envio de email',
-    );
   }
 }
